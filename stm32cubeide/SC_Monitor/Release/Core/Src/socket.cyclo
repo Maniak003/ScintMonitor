@@ -1,0 +1,12 @@
+../Core/Src/socket.c:198:8:close	4
+../Core/Src/socket.c:105:8:socket	18
+../Core/Src/socket.c:241:8:listen	6
+../Core/Src/socket.c:257:8:connect	11
+../Core/Src/socket.c:297:8:disconnect	7
+../Core/Src/socket.c:317:9:send	15
+../Core/Src/socket.c:385:9:recv	12
+../Core/Src/socket.c:490:9:sendto	17
+../Core/Src/socket.c:594:9:recvfrom	21
+../Core/Src/socket.c:776:9:ctlsocket	14
+../Core/Src/socket.c:822:9:setsockopt	14
+../Core/Src/socket.c:875:9:getsockopt	17

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+PID=$(ps -fe|grep -v grep |grep "mainChart-1.gp" | awk '{print $2}')
+
+echo "$PID"
+
+if [ ! -z "$PID" ]; then
+	kill $PID
+else
+	echo "No proc"
+fi
+#./reader -u /dev/ttyUSB0 alpha-21062025.dat
+./reader -m /dev/ttyUSB0 alpha-01072025.dat
