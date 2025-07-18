@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Gistogram</title>
+    <style>
+        .chartBox {
+            width: 1000px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chartBox">
+      <canvas id="myChart"></canvas>
+    </div>
+
+    <script src="chart.js"></script>
+		
+    <script>
+      const ctx = document.getElementById('myChart');
+      var arrJson = '{"arr": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}';
+      var arr = JSON.parse(arrJson)['arr'];
+      var squares = [];
+      var squares2 = [];
+      var labels = [];
+      var backgroundColor = [];
+      for (var elem of arr) {
+        squares.push(elem * elem);
+        squares2.push(elem * 4);
+        labels.push(elem);
+        backgroundColor.push('rgb(100, 255, 255)');}
+      new Chart(ctx, { type: 'line',
+        data: { labels: labels,
+          datasets: [{ label: 'Squares', data: squares, backgroundColor: backgroundColor, pointRadius: 0, borderColor: 'Red', borderWidth: 1 },
+          { label: 'Squares2', data: squares2, backgroundColor: backgroundColor, pointRadius: 0, borderColor: 'Green', borderWidth: 1, /*tension: 0.9*/}]
+        },
+        options: { /*tension: 0.8,*/ plugins: {legend: {display: false}}, scales: {y: {beginAtZero: true}}, animations: false, }});</script></body></html>

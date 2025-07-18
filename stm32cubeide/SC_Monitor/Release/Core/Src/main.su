@@ -1,0 +1,4 @@
+../Core/Src/main.c:87:10:sendWorld	24	static
+../Core/Src/main.c:426:6:SystemClock_Config	88	static,ignoring_inline_asm
+../Core/Src/main.c:107:5:main	10120	static,ignoring_inline_asm
+../Core/Src/main.c:851:6:Error_Handler	0	static,ignoring_inline_asm

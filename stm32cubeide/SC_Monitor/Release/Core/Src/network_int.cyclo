@@ -1,0 +1,12 @@
+../Core/Src/network_int.c:42:6:W5500_Select	1
+../Core/Src/network_int.c:46:6:W5500_Unselect	1
+../Core/Src/network_int.c:50:6:W5500_ReadBuff	1
+../Core/Src/network_int.c:58:9:W5500_ReadByte	1
+../Core/Src/network_int.c:54:6:W5500_WriteBuff	1
+../Core/Src/network_int.c:64:6:W5500_WriteByte	1
+../Core/Src/network_int.c:6:6:UART_Printf	1
+../Core/Src/network_int.c:29:6:Callback_IPAssigned	1
+../Core/Src/network_int.c:36:6:Callback_IPConflict	1
+../Core/Src/network_int.c:71:5:linsten_tcp_socket	7
+../Core/Src/network_int.c:148:6:init_w5500	4
+../Core/Src/network_int.c:248:9:sendToZabbix	7
