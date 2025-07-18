@@ -6,6 +6,7 @@
 #include "w5500.h"
 #include "socket.h"
 #include "dhcp.h"
+#include "webpages.h"
 
 /* For W5500*/
 #define ZABBIX_ENABLE

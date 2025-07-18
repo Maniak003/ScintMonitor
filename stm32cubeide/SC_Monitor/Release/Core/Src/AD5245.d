@@ -38,7 +38,7 @@ Core/Src/AD5245.o: ../Core/Src/AD5245.c ../Core/Inc/AD5245.h \
  ../Core/Inc/ssd1306.h ../Core/Inc/ssd1306_conf.h \
  ../Core/Inc/ssd1306_fonts.h ../Core/Inc/AD5245.h ../Core/Inc/w5500.h \
  ../Core/Inc/wizchip_conf.h ../Core/Inc/socket.h ../Core/Inc/dhcp.h \
- ../Core/Inc/networkint.h
+ ../Core/Inc/networkint.h ../Core/Inc/webpages.h
 ../Core/Inc/AD5245.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal.h:
@@ -86,3 +86,4 @@ Core/Src/AD5245.o: ../Core/Src/AD5245.c ../Core/Inc/AD5245.h \
 ../Core/Inc/socket.h:
 ../Core/Inc/dhcp.h:
 ../Core/Inc/networkint.h:
+../Core/Inc/webpages.h:

@@ -13,7 +13,6 @@ void UART_Printf(const char* fmt, ...) {
 }
 #endif
 
-
 wiz_NetInfo net_info = {
 	.mac  = { MAC_ADDRESS },
 	.dhcp = NETINFO_DHCP
@@ -24,7 +23,7 @@ uint8_t dhcp_buffer[1024];
 __attribute__((aligned(4)))
 uint8_t receive_buff[RECEIVE_BUFF_SIZE];
 
-volatile bool ip_assigned = false;
+volatile bool ip_assigned = false, wait_connect_flag = true;
 
 void Callback_IPAssigned(void) {
 #ifdef ZABBIX_DEBUG
@@ -69,60 +68,59 @@ void W5500_WriteByte(uint8_t byte) {
  * Процедура для блокирующего чтения из сокета
  */
 int linsten_tcp_socket(void) {
-	uint16_t t_out_connect;
 	int8_t ss_state = 0x00;
-	ss_state = socket(HTTP_SOCKET, Sn_MR_TCP, LISTEN_PORT, 0);
-	if (ss_state != HTTP_SOCKET) {
-		#ifdef ZABBIX_DEBUG
-		UART_Printf("socket - Error: %d\r\n", ss_state);
-		#endif
-		return (-1);
-	}
 
-	//uint8_t socket_io_mode = SOCK_IO_NONBLOCK;
-	uint8_t socket_io_mode = SOCK_IO_BLOCK;
+	if (wait_connect_flag) {
+		ss_state = socket(HTTP_SOCKET, Sn_MR_TCP, LISTEN_PORT, 0);
+		if (ss_state != HTTP_SOCKET) {
+			#ifdef ZABBIX_DEBUG
+			UART_Printf("socket - Error: %d\r\n", ss_state);
+			#endif
+			return (-1);
+		}
 
-	ss_state = ctlsocket(HTTP_SOCKET, CS_SET_IOMODE, &socket_io_mode);
-	if (ss_state != SOCK_OK) {
-		#ifdef ZABBIX_DEBUG
-		UART_Printf("ctlsocket - Error: %d\r\n", ss_state);
-		#endif
-		//close(HTTP_SOCKET);
-		return (-1);
-	}
+		//uint8_t socket_io_mode = SOCK_IO_NONBLOCK;
+		uint8_t socket_io_mode = SOCK_IO_BLOCK;
 
-	ss_state = listen(HTTP_SOCKET);
-	if(ss_state != SOCK_OK) {
-		#ifdef ZABBIX_DEBUG
-		UART_Printf("listen - Error: %d\r\n", ss_state);
-		#endif
-		//close(HTTP_SOCKET);
-		return (-1);
+		ss_state = ctlsocket(HTTP_SOCKET, CS_SET_IOMODE, &socket_io_mode);
+		if (ss_state != SOCK_OK) {
+			#ifdef ZABBIX_DEBUG
+			UART_Printf("ctlsocket - Error: %d\r\n", ss_state);
+			#endif
+			//close(HTTP_SOCKET);
+			return (-1);
+		}
+
+		ss_state = listen(HTTP_SOCKET);
+		if(ss_state != SOCK_OK) {
+			#ifdef ZABBIX_DEBUG
+			UART_Printf("listen - Error: %d\r\n", ss_state);
+			#endif
+			//close(HTTP_SOCKET);
+			return (-1);
+		}
 	}
-	uint8_t sr = 0x00, sr_tmp = 0x00;
+	uint8_t sr = 0x00;
 	do {
 		 sr = getSn_SR(HTTP_SOCKET);
-		//#ifdef ZABBIX_DEBUG
-		 //if (sr != sr_tmp) {
-		//	 UART_Printf("SR: %x.\r\n", sr);
-		//	 sr_tmp = sr;
-		 //}
-		//#endif
-	} while (sr != 0x17 && sr != 0x00 /*&& sr != 0x14*/);
+	} while (sr != 0x17 && sr != 0x00 && sr != 0x14);
 
 	switch (sr) {
 	case 0x00:
 		#ifdef ZABBIX_DEBUG
 		UART_Printf("Some error occurred on server socket. Please restart.\r\n");
 		#endif
-		return(-1);
+		return(-2);
 		//break;
+	case 0x14:
+		wait_connect_flag = false;
+		break;
 	case 0x17:
 		#ifdef ZABBIX_DEBUG
 		UART_Printf("Client connected.\r\n");
 		#endif
-		t_out_connect = TOUTCONNECT;
-		while (t_out_connect-- > 1) {
+		wait_connect_flag = true;
+		while (1) {
 			int len = recv(HTTP_SOCKET, receive_buff, RECEIVE_BUFF_SIZE);
 			if(len == SOCKERR_SOCKSTATUS) {
 				#ifdef ZABBIX_DEBUG
@@ -131,10 +129,22 @@ int linsten_tcp_socket(void) {
 				break;
 			}
 			receive_buff[len]='\0';
+			int stpos = strcmp((char *) receive_buff, "GET / HTTP/1.1");
+			//UART_Printf("Pos: %d\r\n", stpos);
+			if ( stpos > 0) {
+				uint8_t chan_buff[13]; // 2 ^ 32 = 4294967296, \x0
+				send(HTTP_SOCKET, (uint8_t *)WEB_PAGE_1, LENGTH_WEB_PAGE_1);
+				for (int i = 0; i < SPECTER_SIZE; i++) {
+					sprintf(chan_buff, "%lu,\x0", specterBuffer[i]);
+					//UART_Printf("%lu\x0", receive_buff);
+					send(HTTP_SOCKET, (uint8_t *)chan_buff, (uint16_t) strlen(chan_buff));
+				}
+				send(HTTP_SOCKET, (uint8_t *)WEB_PAGE_2, LENGTH_WEB_PAGE_2);
+			}
 			#ifdef ZABBIX_DEBUG
-			UART_Printf("Read from client: %s\r\n", receive_buff);
+			UART_Printf("\r\nRead from client:[\r\n%s\r\n]\r\n", receive_buff);
 			#endif
-			send(HTTP_SOCKET, (uint8_t *)"123\n\r", 5);
+			//send(HTTP_SOCKET, (uint8_t *)"123\n\r", 5);
 			//HAL_Delay(1000);
 			disconnect(HTTP_SOCKET);
 			break;

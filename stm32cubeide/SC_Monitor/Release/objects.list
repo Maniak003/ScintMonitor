@@ -11,6 +11,7 @@
 "./Core/Src/sysmem.o"
 "./Core/Src/system_stm32g4xx.o"
 "./Core/Src/w5500.o"
+"./Core/Src/webpages.o"
 "./Core/Src/wizchip_conf.o"
 "./Core/Startup/startup_stm32g473cetx.o"
 "./Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal.o"

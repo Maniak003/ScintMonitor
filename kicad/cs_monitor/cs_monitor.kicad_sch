@@ -13215,7 +13215,7 @@
 	)
 	(global_label "INT_ETH"
 		(shape input)
-		(at 100.33 77.47 0)
+		(at 100.33 74.93 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -13225,7 +13225,7 @@
 		)
 		(uuid "4b92284c-3ab5-45e1-8812-97016364bebf")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 110.6328 77.47 0)
+			(at 110.6328 74.93 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13279,7 +13279,7 @@
 	)
 	(global_label "SS_ETH"
 		(shape input)
-		(at 100.33 74.93 0)
+		(at 100.33 77.47 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -13289,7 +13289,7 @@
 		)
 		(uuid "5cc3f192-7d24-4e8a-a7f1-1462142717fe")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 110.1489 74.93 0)
+			(at 110.1489 77.47 0)
 			(effects
 				(font
 					(size 1.27 1.27)

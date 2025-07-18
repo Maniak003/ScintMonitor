@@ -39,7 +39,7 @@ Core/Src/ssd1306.o: ../Core/Src/ssd1306.c ../Core/Inc/ssd1306.h \
  ../Core/Inc/ssd1306_fonts.h ../Core/Inc/main.h ../Core/Inc/ssd1306.h \
  ../Core/Inc/AD5245.h ../Core/Inc/main.h ../Core/Inc/w5500.h \
  ../Core/Inc/wizchip_conf.h ../Core/Inc/socket.h ../Core/Inc/dhcp.h \
- ../Core/Inc/networkint.h
+ ../Core/Inc/networkint.h ../Core/Inc/webpages.h
 ../Core/Inc/ssd1306.h:
 ../Core/Inc/ssd1306_conf.h:
 ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal.h:
@@ -88,3 +88,4 @@ Core/Src/ssd1306.o: ../Core/Src/ssd1306.c ../Core/Inc/ssd1306.h \
 ../Core/Inc/socket.h:
 ../Core/Inc/dhcp.h:
 ../Core/Inc/networkint.h:
+../Core/Inc/webpages.h:
