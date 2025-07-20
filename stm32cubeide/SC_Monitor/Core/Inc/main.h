@@ -106,6 +106,8 @@ void Error_Handler(void);
 #define AdjCOMP_GPIO_Port GPIOA
 #define W5500_CS_Pin GPIO_PIN_11
 #define W5500_CS_GPIO_Port GPIOB
+#define ETH_INT_Pin GPIO_PIN_12
+#define ETH_INT_GPIO_Port GPIOB
 #define W5500_SCK_Pin GPIO_PIN_13
 #define W5500_SCK_GPIO_Port GPIOB
 #define W5500_MISO_Pin GPIO_PIN_14

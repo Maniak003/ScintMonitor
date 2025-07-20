@@ -137,6 +137,18 @@ int main(void)
   MX_USART1_UART_Init();
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
+
+
+  /* USER CODE END 2 */
+
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+  /* Start init */
+  bzero((char *) uartBuffer, sizeof(uartBuffer));
+  sprintf(uartBuffer, "\n\rStart spectrometer.\n\r");
+  HAL_UART_Transmit(&huart1, (uint8_t *) uartBuffer, strlen(uartBuffer), 100);
+
+  HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
   ssd1306_Init();
   ssd1306_Fill(Black);
   ssd1306_SetCursor(0, 0);
@@ -154,17 +166,6 @@ int main(void)
   ssd1306_UpdateScreen();
 
 
-
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  /* Start init */
-  bzero((char *) uartBuffer, sizeof(uartBuffer));
-  sprintf(uartBuffer, "\n\rStart spectrometer.\n\r");
-  HAL_UART_Transmit(&huart1, (uint8_t *) uartBuffer, strlen(uartBuffer), 100);
-
-  HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
 
   HAL_GPIO_WritePin(W5500_CS_GPIO_Port, W5500_CS_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(W5500_RST_GPIO_Port, W5500_RST_Pin, GPIO_PIN_RESET);	// Reset W5500
@@ -823,6 +824,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : ETH_INT_Pin */
+  GPIO_InitStruct.Pin = ETH_INT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(ETH_INT_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : W5500_RST_Pin LED_Pin */
   GPIO_InitStruct.Pin = W5500_RST_Pin|LED_Pin;
