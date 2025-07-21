@@ -16156,7 +16156,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "117k"
+		(property "Value" "120k"
 			(at 172.085 78.74 0)
 			(effects
 				(font
@@ -17066,7 +17066,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "1.02k"
+		(property "Value" "1k"
 			(at 187.198 121.92 0)
 			(effects
 				(font
@@ -17808,7 +17808,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "50k"
+		(property "Value" "33k"
 			(at 189.865 97.155 90)
 			(effects
 				(font
@@ -22095,7 +22095,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "5.1k"
+		(property "Value" "4.3k"
 			(at 177.165 93.98 0)
 			(effects
 				(font
@@ -22905,7 +22905,7 @@
 				)
 			)
 		)
-		(property "Value" "220p"
+		(property "Value" "82p"
 			(at 182.88 71.12 0)
 			(effects
 				(font
@@ -24559,7 +24559,7 @@
 		(dnp no)
 		(uuid "d26054ba-eaec-4a7d-96a8-855f851b7877")
 		(property "Reference" "C32"
-			(at 195.58 116.84 0)
+			(at 197.358 121.158 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -24568,7 +24568,7 @@
 			)
 		)
 		(property "Value" "1000uF"
-			(at 194.818 118.618 0)
+			(at 195.834 123.19 0)
 			(effects
 				(font
 					(size 1.27 1.27)

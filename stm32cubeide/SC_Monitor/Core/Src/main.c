@@ -253,7 +253,7 @@ int main(void)
 
 		  tm = ( currentTime - measurementTime) / 1000;
 		  ssd1306_SetCursor(0, 0);
-		  sprintf(text1306, "C:%lu", pulseCounter);
+		  sprintf(text1306, "C:%0.2f", (float) pulseCounter / (float) tm);
 		  ssd1306_WriteString(text1306, Font_6x8, White);
 		  ssd1306_SetCursor(0, 8);
 		  sprintf(text1306, "T:%lu", tm);
@@ -523,8 +523,10 @@ static void MX_ADC1_Init(void)
   sConfig.Rank = ADC_REGULAR_RANK_1;
   sConfig.SamplingTime = ADC_SAMPLETIME_6CYCLES_5;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
-  sConfig.OffsetNumber = ADC_OFFSET_NONE;
+  sConfig.OffsetNumber = ADC_OFFSET_1;
   sConfig.Offset = 0;
+  sConfig.OffsetSign = ADC_OFFSET_SIGN_NEGATIVE;
+  sConfig.OffsetSaturation = DISABLE;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
