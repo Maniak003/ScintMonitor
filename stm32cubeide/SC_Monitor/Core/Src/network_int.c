@@ -23,6 +23,8 @@ uint8_t dhcp_buffer[1024];
 __attribute__((aligned(4)))
 uint8_t receive_buff[RECEIVE_BUFF_SIZE];
 
+char pathHTTP[100];
+
 volatile bool ip_assigned = false, wait_connect_flag = true;
 
 void Callback_IPAssigned(void) {
@@ -79,6 +81,7 @@ int linsten_tcp_socket(void) {
 			return (-1);
 		}
 
+		//setSn_TXBUF_SIZE(HTTP_SOCKET, 255);
 		//uint8_t socket_io_mode = SOCK_IO_NONBLOCK;
 		uint8_t socket_io_mode = SOCK_IO_BLOCK;
 
@@ -129,21 +132,106 @@ int linsten_tcp_socket(void) {
 				break;
 			}
 			receive_buff[len]='\0';
-			int stpos = strcmp((char *) receive_buff, "GET / HTTP/1.1");
-			//UART_Printf("Pos: %d\r\n", stpos);
-			if ( stpos > 0) {
-				uint8_t chan_buff[13]; // 2 ^ 32 = 4294967296, \x0
-				send(HTTP_SOCKET, (uint8_t *)WEB_PAGE_1, LENGTH_WEB_PAGE_1);
-				for (int i = 0; i < SPECTER_SIZE; i++) {
-					sprintf(chan_buff, "%lu,\x0", specterBuffer[i]);
-					//UART_Printf("%lu\x0", receive_buff);
-					send(HTTP_SOCKET, (uint8_t *)chan_buff, (uint16_t) strlen(chan_buff));
-				}
-				send(HTTP_SOCKET, (uint8_t *)WEB_PAGE_2, LENGTH_WEB_PAGE_2);
+			char *path_start = strchr((char *) receive_buff, ' ');	// Начало пути
+			if (!path_start) {
+				#ifdef ZABBIX_DEBUG
+				UART_Printf("Invalid HTTP.\r\n");
+				#endif
+				break;
 			}
-			#ifdef ZABBIX_DEBUG
-			UART_Printf("\r\nRead from client:[\r\n%s\r\n]\r\n", receive_buff);
-			#endif
+			path_start++;  // Пропускаем пробел
+			/* Пробуем найти конец пути */
+			char *path_end = path_start;
+			while (*path_end && *path_end != ' ' && *path_end != '?' && *path_end != '\r') {
+			        path_end++;
+			}
+			size_t path_len = path_end - path_start;		// Длина пути
+			if (path_len < sizeof(pathHTTP)) {
+				strncpy(pathHTTP, path_start, path_len);
+				pathHTTP[path_len] = '\0';
+				#ifdef ZABBIX_DEBUG
+				UART_Printf("Path : %s\r\n", pathHTTP);
+				#endif
+			} else {
+				#ifdef ZABBIX_DEBUG
+				UART_Printf("Path is too long. %d\r\n", path_len);
+				#endif
+				break;
+			}
+
+			int stpos = strcmp((char *) pathHTTP, "/");
+			int len_s = 0;
+			//UART_Printf("Pos: %d\r\n", stpos);
+			if ( stpos == 0) {
+				len_s = send(HTTP_SOCKET, (uint8_t *)WEB_PAGE1, LENGTH_WEB_PAGE1);
+				HAL_Delay(50);
+				//#ifdef ZABBIX_DEBUG
+				//UART_Printf("page1: %d\r\n", len_s);
+				//#endif
+
+				len_s = send(HTTP_SOCKET, (uint8_t *)WEB_PAGE2, LENGTH_WEB_PAGE2);
+				//#ifdef ZABBIX_DEBUG
+				//UART_Printf("page2: %d\r\n", len_s);
+				//#endif
+			} else {
+				stpos = strcmp((char *) pathHTTP, "/data");
+				if (stpos == 0) {
+					#ifdef ZABBIX_DEBUG
+					UART_Printf("Specter data\r\n");
+					#endif
+					uint8_t chan_buff[13]; // 2 ^ 32 = 4294967296, \x0
+					send(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_1, LENGTH_SPECTER_DATA_1);
+					/* Передача текущего соточния счетчика*/
+					send(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_2, LENGTH_SPECTER_DATA_2);
+					sprintf((char *)chan_buff, "%lu,\x0", pulseCounter);
+					send(HTTP_SOCKET, (uint8_t *)chan_buff, (uint16_t) strlen(chan_buff));
+
+					/* Передача времени набора */
+					send(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_3, LENGTH_SPECTER_DATA_3);
+					sprintf((char *)chan_buff, "%lu,\x0", tm);
+					send(HTTP_SOCKET, (uint8_t *)chan_buff, (uint16_t) strlen(chan_buff));
+					//HAL_Delay(100);
+					/* Передача CPS */
+					//send(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_4, LENGTH_SPECTER_DATA_4);
+					//sprintf((char *)chan_buff, "%0.2f\x0", pulseCounter);
+					//send(HTTP_SOCKET, (uint8_t *)chan_buff, (uint16_t) strlen(chan_buff));
+
+					/* Передача точности измерения по 3 сигма */
+					//send(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_5, LENGTH_SPECTER_DATA_5);
+					//sprintf((char *)chan_buff, "%0.1f\x0", pulseCounter);
+					//send(HTTP_SOCKET, (uint8_t *)chan_buff, (uint16_t) strlen(chan_buff));
+
+					/* Передача спектра */
+					send(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_6, LENGTH_SPECTER_DATA_6);
+					for (int i = 0; i < SPECTER_SIZE; i++) {
+						if (i < SPECTER_SIZE - 1) {
+							sprintf((char *)chan_buff, "%lu,\x0", specterBuffer[i]);
+						} else {
+							sprintf((char *)chan_buff, "%lu\x0", specterBuffer[i]);
+						}
+						//UART_Printf("%lu\x0", receive_buff);
+						send(HTTP_SOCKET, (uint8_t *)chan_buff, (uint16_t) strlen(chan_buff));
+					}
+					send(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_7, LENGTH_SPECTER_DATA_7);
+				} else {
+					stpos = strcmp((char *) pathHTTP, "/clr");
+					if (stpos == 0) {
+						for (int i = 0; i < SPECTER_SIZE; i++) {
+							specterBuffer[i] = 0;
+						}
+						pulseCounter = 0;
+						measurementTime = HAL_GetTick();
+					} else {
+						stpos = strcmp((char *) pathHTTP, "/rst");
+						if (stpos == 0) {
+							NVIC_SystemReset();
+						}
+					}
+				}
+			}
+			//#ifdef ZABBIX_DEBUG
+			//UART_Printf("\r\nRead from client:[\r\n%s\r\n]\r\n", receive_buff);
+			//#endif
 			//send(HTTP_SOCKET, (uint8_t *)"123\n\r", 5);
 			//HAL_Delay(1000);
 			disconnect(HTTP_SOCKET);

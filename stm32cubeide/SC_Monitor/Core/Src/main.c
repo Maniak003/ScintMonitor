@@ -63,7 +63,6 @@ uint32_t pulseLevel[1];
 bool reqToSpecter = false, testFlag = false;
 char text1306[11];
 char ZabbixHostName[255];
-char Spectrometr_page_str[11000];
 
 
 /* USER CODE END PV */

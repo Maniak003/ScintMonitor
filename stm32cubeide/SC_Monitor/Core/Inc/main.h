@@ -77,7 +77,7 @@ extern "C" {
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
 extern uint32_t pulseLevel[1];
-extern uint32_t pulseCounter;
+extern uint32_t pulseCounter, tm, measurementTime;
 extern uint32_t specterBuffer[SPECTER_SIZE];
 extern bool reqToSpecter;
 extern uint8_t ampLevel;
