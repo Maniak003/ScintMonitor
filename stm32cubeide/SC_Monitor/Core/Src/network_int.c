@@ -1,5 +1,5 @@
 #include "networkint.h"
-
+#include <stdlib.h>
 
 
 #ifdef ZABBIX_DEBUG
@@ -23,7 +23,7 @@ uint8_t dhcp_buffer[1024];
 __attribute__((aligned(4)))
 uint8_t receive_buff[RECEIVE_BUFF_SIZE];
 
-char pathHTTP[100];
+char pathHTTP[512];
 
 volatile bool ip_assigned = false, wait_connect_flag = true;
 
@@ -64,6 +64,36 @@ uint8_t W5500_ReadByte(void) {
 
 void W5500_WriteByte(uint8_t byte) {
 	W5500_WriteBuff(&byte, sizeof(byte));
+}
+
+void send_tcp_data(uint8_t sock, uint8_t *data, uint32_t len) {
+    uint32_t sent = 0;
+
+    while (sent < len) {
+        // Проверить свободное место в буфере
+        uint16_t free_size = getSn_TX_FSR(sock);
+
+        if (free_size == 0) {
+            // Ожидать освобождения буфера
+            HAL_Delay(1);
+            continue;
+        }
+
+        // Рассчитать размер блока для отправки
+        uint16_t chunk_size = len - sent;
+        if (chunk_size > free_size) {
+            chunk_size = free_size;
+        }
+
+        // Записать данные в буфер сокета
+        wiz_send_data(sock, data + sent, chunk_size);
+        setSn_CR(sock, Sn_CR_SEND);  // Отправить данные
+
+        // Дождаться выполнения команды
+        while (getSn_CR(sock) != 0);
+
+        sent += chunk_size;
+    }
 }
 
 /*
@@ -119,9 +149,9 @@ int linsten_tcp_socket(void) {
 		wait_connect_flag = false;
 		break;
 	case 0x17:
-		#ifdef ZABBIX_DEBUG
-		UART_Printf("Client connected.\r\n");
-		#endif
+		//#ifdef ZABBIX_DEBUG
+		//UART_Printf("Client connected.\r\n");
+		//#endif
 		wait_connect_flag = true;
 		while (1) {
 			int len = recv(HTTP_SOCKET, receive_buff, RECEIVE_BUFF_SIZE);
@@ -146,12 +176,13 @@ int linsten_tcp_socket(void) {
 			        path_end++;
 			}
 			size_t path_len = path_end - path_start;		// Длина пути
+			/* Передача главной страници */
 			if (path_len < sizeof(pathHTTP)) {
 				strncpy(pathHTTP, path_start, path_len);
 				pathHTTP[path_len] = '\0';
-				#ifdef ZABBIX_DEBUG
-				UART_Printf("Path : %s\r\n", pathHTTP);
-				#endif
+				//#ifdef ZABBIX_DEBUG
+				//UART_Printf("Path : %s\r\n", pathHTTP);
+				//#endif
 			} else {
 				#ifdef ZABBIX_DEBUG
 				UART_Printf("Path is too long. %d\r\n", path_len);
@@ -162,23 +193,16 @@ int linsten_tcp_socket(void) {
 			int stpos = strcmp((char *) pathHTTP, "/");
 			int len_s = 0;
 			//UART_Printf("Pos: %d\r\n", stpos);
+			/* Главная web страница */
 			if ( stpos == 0) {
-				len_s = send(HTTP_SOCKET, (uint8_t *)WEB_PAGE1, LENGTH_WEB_PAGE1);
-				HAL_Delay(50);
-				//#ifdef ZABBIX_DEBUG
-				//UART_Printf("page1: %d\r\n", len_s);
-				//#endif
-
-				len_s = send(HTTP_SOCKET, (uint8_t *)WEB_PAGE2, LENGTH_WEB_PAGE2);
-				//#ifdef ZABBIX_DEBUG
-				//UART_Printf("page2: %d\r\n", len_s);
-				//#endif
+				send_tcp_data(HTTP_SOCKET, (uint8_t *)WEB_PAGE, LENGTH_WEB_PAGE);
 			} else {
 				stpos = strcmp((char *) pathHTTP, "/data");
+				/* Запросы на передачу данных. */
 				if (stpos == 0) {
-					#ifdef ZABBIX_DEBUG
-					UART_Printf("Specter data\r\n");
-					#endif
+					//#ifdef ZABBIX_DEBUG
+					//UART_Printf("Specter data\r\n");
+					//#endif
 					uint8_t chan_buff[13]; // 2 ^ 32 = 4294967296, \x0
 					send(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_1, LENGTH_SPECTER_DATA_1);
 					/* Передача текущего соточния счетчика*/
@@ -191,11 +215,6 @@ int linsten_tcp_socket(void) {
 					sprintf((char *)chan_buff, "%lu,\x0", tm);
 					send(HTTP_SOCKET, (uint8_t *)chan_buff, (uint16_t) strlen(chan_buff));
 					//HAL_Delay(100);
-					/* Передача CPS */
-					//send(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_4, LENGTH_SPECTER_DATA_4);
-					//sprintf((char *)chan_buff, "%0.2f\x0", pulseCounter);
-					//send(HTTP_SOCKET, (uint8_t *)chan_buff, (uint16_t) strlen(chan_buff));
-
 					/* Передача точности измерения по 3 сигма */
 					//send(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_5, LENGTH_SPECTER_DATA_5);
 					//sprintf((char *)chan_buff, "%0.1f\x0", pulseCounter);
@@ -203,7 +222,14 @@ int linsten_tcp_socket(void) {
 
 					/* Передача спектра */
 					send(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_6, LENGTH_SPECTER_DATA_6);
+					pulseCounterSel = 0;
 					for (int i = 0; i < SPECTER_SIZE; i++) {
+						for (int j = 0; j < NUMBERINTERVAL; j++) {
+							if ((i > intArrData[j].startPoint) && (i < intArrData[j].endPoint)) {
+								pulseCounterSel += specterBuffer[i];
+								break;
+							}
+						}
 						if (i < SPECTER_SIZE - 1) {
 							sprintf((char *)chan_buff, "%lu,\x0", specterBuffer[i]);
 						} else {
@@ -213,7 +239,15 @@ int linsten_tcp_socket(void) {
 						send(HTTP_SOCKET, (uint8_t *)chan_buff, (uint16_t) strlen(chan_buff));
 					}
 					send(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_7, LENGTH_SPECTER_DATA_7);
+					/* Передача счетчика выделенной области */
+					send(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_4, LENGTH_SPECTER_DATA_4);
+					sprintf((char *)chan_buff, "%lu\x0", pulseCounterSel);
+					send(HTTP_SOCKET, (uint8_t *)chan_buff, (uint16_t) strlen(chan_buff));
+					/* Завершение json данных */
+					send(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_8, LENGTH_SPECTER_DATA_8);
+
 				} else {
+					/* Перезапуск набора спектра */
 					stpos = strcmp((char *) pathHTTP, "/clr");
 					if (stpos == 0) {
 						for (int i = 0; i < SPECTER_SIZE; i++) {
@@ -222,9 +256,55 @@ int linsten_tcp_socket(void) {
 						pulseCounter = 0;
 						measurementTime = HAL_GetTick();
 					} else {
+						/* Аппаратный сброс контроллера */
 						stpos = strcmp((char *) pathHTTP, "/rst");
 						if (stpos == 0) {
 							NVIC_SystemReset();
+						} else {
+							stpos = strncmp((char *) pathHTTP, "/sel", 4);
+							if (stpos == 0) {
+								uint16_t len_interval = strlen(pathHTTP);
+								char tmpBuf[20];
+								int m, k, j, tmpInt;
+								#ifdef ZABBIX_DEBUG
+								UART_Printf("send: %lu %s\r\n", len_interval, pathHTTP);
+								#endif
+								/* Ответим браузеру, иначе задолбает запросами. */
+								send_tcp_data(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_9, LENGTH_SPECTER_DATA_9);
+								/* Предварительно очистим массив интервалов */
+								for (int i = 0; i < NUMBERINTERVAL; i++) {
+									intArrData[i].startPoint = 0;
+								}
+								/* Парсинг запроса и запполнение массива интервалов */
+								j = 0;
+								k = 0;
+								m = 0;
+								for (int i = 4; i <= len_interval; i++ ) {
+									if (pathHTTP[i] == '|') {	// Нашли разделитель, заначит число прочитано
+										tmpBuf[j] = 0;
+										j = 0;
+										tmpInt = atoi(tmpBuf);
+										switch (k++) {
+										case 0:
+											intArrData[m].startPoint = (uint16_t) tmpInt;
+											break;
+										case 1:
+											intArrData[m].endPoint = (uint16_t) tmpInt;
+											break;
+										case 2:
+											k = 0;
+											//intArrData[m].lev.uData = (uint16_t) tmpInt;
+											//break;
+										}
+										#ifdef ZABBIX_DEBUG
+										UART_Printf("DT: %lu\r\n", tmpInt);
+										#endif
+									} else {
+										tmpBuf[j++] = pathHTTP[i];
+									}
+								}
+
+							}
 						}
 					}
 				}

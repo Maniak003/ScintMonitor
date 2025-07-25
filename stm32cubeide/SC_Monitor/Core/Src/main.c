@@ -57,12 +57,13 @@ DMA_HandleTypeDef hdma_usart1_rx;
 uint16_t HVLevel = HV_LEVEL, COMPLevel = COMPARATOR_LEVEL;
 char uartBuffer[400] = {0,};
 uint32_t specterBuffer[SPECTER_SIZE] = {0,};
-uint32_t pulseCounter = 0, measurementTime = 0, currentTime = 0, delayTime1 = 0, tm = 0;
+uint32_t pulseCounter = 0, measurementTime = 0, currentTime = 0, delayTime1 = 0, tm = 0, pulseCounterSel = 0;
 uint8_t ctrlChar[1] = {0,}, ampLevel = AMP_DEFAULT;
 uint32_t pulseLevel[1];
 bool reqToSpecter = false, testFlag = false;
 char text1306[11];
 char ZabbixHostName[255];
+struct intervalData intArrData[NUMBERINTERVAL];
 
 
 /* USER CODE END PV */

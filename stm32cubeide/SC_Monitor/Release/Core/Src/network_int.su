@@ -7,6 +7,7 @@
 ../Core/Src/network_int.c:6:6:UART_Printf	272	static
 ../Core/Src/network_int.c:30:6:Callback_IPAssigned	8	static
 ../Core/Src/network_int.c:37:6:Callback_IPConflict	0	static
-../Core/Src/network_int.c:72:5:linsten_tcp_socket	40	static,ignoring_inline_asm
-../Core/Src/network_int.c:246:6:init_w5500	88	static
-../Core/Src/network_int.c:346:9:sendToZabbix	280	static
+../Core/Src/network_int.c:69:6:send_tcp_data	32	static
+../Core/Src/network_int.c:102:5:linsten_tcp_socket	56	static,ignoring_inline_asm
+../Core/Src/network_int.c:326:6:init_w5500	88	static
+../Core/Src/network_int.c:426:9:sendToZabbix	280	static

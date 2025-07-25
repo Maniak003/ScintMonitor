@@ -25,7 +25,7 @@
 #define MAX_HTTPSOCK	4
 #define LISTEN_PORT		80
 #define TOUTCONNECT		100
-#define RECEIVE_BUFF_SIZE 128
+#define RECEIVE_BUFF_SIZE 512
 
 
 void init_w5500(void);

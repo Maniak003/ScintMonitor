@@ -53,6 +53,9 @@ extern "C" {
 #define HV_LEVEL 100
 #define AMP_DEFAULT 255
 #define DELAYTIME1 1000
+#define NUMBERINTERVAL 10
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
 
 /* For W5500*/
 /*
@@ -77,10 +80,24 @@ extern "C" {
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
 extern uint32_t pulseLevel[1];
-extern uint32_t pulseCounter, tm, measurementTime;
+extern uint32_t pulseCounter, tm, measurementTime, pulseCounterSel;
 extern uint32_t specterBuffer[SPECTER_SIZE];
 extern bool reqToSpecter;
 extern uint8_t ampLevel;
+
+union level {
+	uint32_t uData;
+	float fData;
+};
+
+struct intervalData {
+	uint16_t startPoint;
+	uint16_t endPoint;
+	union level lev;
+};
+
+extern struct intervalData intArrData[NUMBERINTERVAL];
+
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
