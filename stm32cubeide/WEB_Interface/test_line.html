@@ -109,22 +109,33 @@
             text-align: center;
         }
         
-        .input-header .action-header {
-            width: 200px;
-            flex: none;
-        }
-        
+        .input-header {
+            display: grid;
+            grid-template-columns: 40px 100px 100px 100px 100px 220px 70px 70px;
+            background: #2c3e50;
+            color: white;
+            padding: 5px 5px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            gap: 10px;
+        }        
         .input-row {
-            display: flex;
+            display: grid;
+            grid-template-columns: 40px 100px 100px 100px 100px 220px 70px 70px;
             align-items: center;
             padding: 5px 5px;
-            margin-bottom: 5px;
-            background: #f9f9f9;
+            margin-bottom: 10px;
+            background: white;
             border-radius: 4px;
-            border: 1px solid #eee;
-            transition: all 0.3s;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            gap: 10px;
         }
-        
+       
         .input-row:hover {
             background: #f1f8ff;
             border-color: #d1e7ff;
@@ -140,22 +151,21 @@
         }
         
         .input-row .row-number {
-            width: 30px;
+            width: 20px;
             text-align: center;
             font-weight: bold;
             color: #7f8c8d;
         }
         
         .delete-btn {
-            width: 90px;
-            padding: 5px;
+            padding: 5px 10px;
             background-color: #e74c3c;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             transition: background-color 0.3s;
-            margin-left: 5px;
+            font-size: 12px;
         }
         
         .delete-btn:hover {
@@ -163,14 +173,14 @@
         }
         
         .select-btn {
-            width: 90px;
-            padding: 5px;
+            padding: 5px 10px;
             background-color: #27ae60;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             transition: background-color 0.3s;
+            font-size: 12px;
         }
         
         .select-btn:hover {
@@ -183,7 +193,13 @@
             border-radius: 4px;
             display: none;
         }
-        
+		.cps-inp {
+			margin-left: 20px;	
+			margin-right: 20px;	
+		}
+		.int-input .float-input {
+			width: 100px;
+		}
         .success {
             background-color: #d4edda;
             color: #155724;
@@ -227,11 +243,14 @@
 			<!-- Правая панель с данными -->
 			<div class="input-panel">
 				<div class="input-header">
-					<div class="row-number">#</div>
+					<div>#</div>
 					<div>Channel</div>
 					<div>Width</div>
 					<div>Level</div>
-					<div class="action-header">Action</div>
+					<div>Aquracy</div>
+					<div>CPS</div>
+					<div>Select</div>
+					<div>Delete</div>
 				</div>
 				<div id="inputContainer"></div>
 				<div id="statusMessage" class="status-message"></div>
@@ -253,12 +272,28 @@
 			const inputContainer = document.getElementById('inputContainer');
 			const addRowBtn = document.getElementById('addRowBtn');
 			const submitBtn = document.getElementById('submitBtn');
+			const readSelectBtn = document.getElementById('readSelectBtn');
 			let rowCount = 0;
 			const maxRows = 10;
 			let sel_input_chan;
 			let sel_input_with;
 			let sel_input_btn;
 			const data = [];
+
+			function floatTo32BitInt(num) {
+			  const buffer = new ArrayBuffer(4);
+			  const view = new DataView(buffer);
+			  view.setFloat32(0, num, false);             // Записываем float (big-endian)
+			  return view.getUint32(0, false);             // Возвращаем как целое число
+			}
+
+			function reloadIntervals(Intrvls) {
+				Intrvls.forEach((interval) => {
+					var wh = Number(interval[1] - interval[0]);
+					var ch = Number(interval[0]) + wh / 2;
+					addInputRow(ch, wh, interval[2]);
+				});
+			}
 			
 			function submitData() {
 				const rows = inputContainer.querySelectorAll('.input-row');
@@ -280,26 +315,31 @@
 				});
 			}
 			// Добавление новой строки ввода
-			function addInputRow() {
+			function addInputRow(selChan = 0, selWidth = 0, selLev = 0) {
 				if (rowCount >= maxRows) {
 					alert(`Maximum intervals: ${maxRows}`);
 					return;
 				}
-
 				const row = document.createElement('div');
 				row.className = 'input-row';
 				row.innerHTML = `
                 <div class="row-number">${rowCount + 1}</div>
-					<input type="number" placeholder="0" class="int-input int_input1" required>
-					<input type="number" placeholder="0" class="int-input int_input2" required>
+					<input type="number" placeholder="0" class="int-input int_input1" max=1020 min=3 required>
+					<input type="number" placeholder="0" class="int-input int_input2" max=1023 min=5 required>
 					<input type="number" placeholder="0" step="any" class="float-input" required>
+					<input type="number" placeholder="0" class="int-input int_input3" value=900 required>
+					<span class=\"cps-inp\" data-row=\"${rowCount}\">0.000000</span>
 					<button class="select-btn action-btn">Sel</button>
 					<button class="delete-btn">Del</button>`;
 				
 				inputContainer.appendChild(row);
 				rowCount++;
 				rowCounter.textContent = rowCount;
-
+				if (selChan != 0 && selWidth != 0)  {
+					row.querySelector('.int_input1').value = selChan;
+					row.querySelector('.int_input2').value = selWidth;
+					row.querySelector('.float-input').value = selLev;
+				}
 				row.querySelector('.action-btn').addEventListener('click', () => {
 					var txt = row.querySelector('.action-btn').innerText;
 					if (txt == "Sel") {
@@ -331,7 +371,7 @@
 			function updateRowNumbers() {
 				const rows = inputContainer.querySelectorAll('.input-row');
 				rows.forEach((row, index) => {
-					row.querySelector('.row-counter').textContent = index + 1;
+					row.querySelector('.row-number').textContent = index + 1;
 				});
 			}
 
@@ -482,7 +522,8 @@
 			
 			addRowBtn.addEventListener('click', addInputRow);
 			submitBtn.addEventListener('click', sendSelectData);
-			window.addEventListener('DOMContentLoaded', addInputRow);
+			readSelectBtn.addEventListener('click', addInputRow(100, 85, 15));
+			window.addEventListener('DOMContentLoaded', addInputRow(512, 84, 10));
 			// Запускаем обновление каждую секунду
 			setInterval(fetchData, 1000);
 

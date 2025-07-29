@@ -93,6 +93,8 @@ union level {
 struct intervalData {
 	uint16_t startPoint;
 	uint16_t endPoint;
+	uint32_t counts;
+	uint16_t aqur;
 	union level lev;
 };
 

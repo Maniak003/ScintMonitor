@@ -99,19 +99,31 @@
             "flex: 1;"\
             "text-align: center;"\
         "}"\
-        ".input-header .action-header {"\
-            "width: 200px;"\
-            "flex: none;"\
+        ".input-header {"\
+            "display: grid;"\
+            "grid-template-columns: 40px 100px 100px 100px 100px 180px 70px 70px;"\
+            "background: #2c3e50;"\
+            "color: white;"\
+            "padding: 5px 5px;"\
+            "border-radius: 4px;"\
+            "margin-bottom: 10px;"\
+            "font-weight: bold;"\
+            "position: sticky;"\
+            "top: 0;"\
+            "z-index: 10;"\
+            "gap: 10px;"\
         "}"\
         ".input-row {"\
-            "display: flex;"\
+            "display: grid;"\
+            "grid-template-columns: 40px 100px 100px 100px 100px 180px 70px 70px;"\
             "align-items: center;"\
             "padding: 5px 5px;"\
-            "margin-bottom: 5px;"\
-            "background: #f9f9f9;"\
+            "margin-bottom: 10px;"\
+            "background: white;"\
             "border-radius: 4px;"\
-            "border: 1px solid #eee;"\
-            "transition: all 0.3s;"\
+            "border: 1px solid #e0e0e0;"\
+            "box-shadow: 0 1px 3px rgba(0,0,0,0.05);"\
+            "gap: 10px;"\
         "}"\
         ".input-row:hover {"\
             "background: #f1f8ff;"\
@@ -132,28 +144,27 @@
             "color: #7f8c8d;"\
         "}"\
         ".delete-btn {"\
-            "width: 90px;"\
-            "padding: 5px;"\
+            "padding: 5px 10px;"\
             "background-color: #e74c3c;"\
             "color: white;"\
             "border: none;"\
             "border-radius: 4px;"\
             "cursor: pointer;"\
             "transition: background-color 0.3s;"\
-            "margin-left: 5px;"\
+            "font-size: 12px;"\
         "}"\
         ".delete-btn:hover {"\
             "background-color: #c0392b;"\
         "}"\
         ".select-btn {"\
-            "width: 90px;"\
-            "padding: 5px;"\
+            "padding: 5px 10px;"\
             "background-color: #27ae60;"\
             "color: white;"\
             "border: none;"\
             "border-radius: 4px;"\
             "cursor: pointer;"\
             "transition: background-color 0.3s;"\
+            "font-size: 12px;"\
         "}"\
         ".select-btn:hover {"\
            "background-color: #2ecc71;"\
@@ -174,6 +185,13 @@
             "color: #721c24;"\
             "display: block;"\
         "}"\
+		".cps-inp {"\
+			"margin-left: 20px;"\
+			"margin-right: 20px;"\
+		"}"\
+		".int-input .float-input {"\
+			"width: 10px;"\
+		"}"\
 	"</style>"\
  	"</head><body>"\
 		"<div class=\"container\">"\
@@ -208,11 +226,14 @@
 			"</div>"\
 			"<div class=\"input-panel\">"\
 				"<div class=\"input-header\">"\
-					"<div class=\"row-number\">#</div>"\
+					"<div>#</div>"\
 					"<div>Channel</div>"\
 					"<div>Width</div>"\
 					"<div>Level</div>"\
-					"<div class=\"action-header\">Action</div>"\
+					"<div>Accuracy</div>"\
+					"<div>CPS</div>"\
+					"<div>Select</div>"\
+					"<div>Delete</div>"\
 				"</div>"\
 				"<div id=\"inputContainer\"></div>"\
 				"<div id=\"statusMessage\" class=\"status-message\"></div>"\
@@ -236,12 +257,54 @@
 			 "const inputContainer = document.getElementById('inputContainer');"\
 			 "const addRowBtn = document.getElementById('addRowBtn');"\
 			 "const submitBtn = document.getElementById('submitBtn');"\
+			 "const readSelBtn = document.getElementById('readSelBtn');"\
 			 "let rowCount = 0;"\
 			 "const maxRows = " TOSTRING(NUMBERINTERVAL) ";"\
 			 "let sel_input_chan;"\
 			 "let sel_input_with;"\
 			 "let sel_input_btn;"\
+			 "let totalTime = 0;"\
+			 "var need_reload_interval = true;"\
 			 "const data = [];"\
+			 "function FloatTo32BitInt(num) {"\
+				"const buffer = new ArrayBuffer(4);"\
+				"const view = new DataView(buffer);"\
+				"view.setFloat32(0, num, false);"\
+				"return view.getUint32(0, false);"\
+			 "}"\
+			 "function uint32ToFloat(intValue) {"\
+				"const buffer = new ArrayBuffer(4);"\
+				"const view = new DataView(buffer);"\
+				"view.setUint32(0, intValue, false);"\
+				"return view.getFloat32(0, false).toFixed(4);"\
+			 "}"\
+			 "function updateCpsValue(rowIndex, value, aqurs) {"\
+    			"const cpsElements = document.querySelectorAll('.cps-inp');"\
+    			"if (rowIndex < cpsElements.length) {"\
+    				"cpsElements[rowIndex].textContent = (value / totalTime).toFixed(4) + \" (\" + (aqurs/Math.sqrt(value)).toFixed(2) + \"%)\";"\
+    			"}"\
+    		"}"\
+			 "function reloadIntervals(Intervals) {"\
+			 	"if (need_reload_interval) {"\
+			 		"Intervals.forEach((interval, index) => {"\
+				 		 "console.log(\"Add intervals.\");"\
+				 		 "if (interval[0] != 0) {"\
+							"var wh = interval[1] - interval[0];"\
+							"var ch = Number(interval[0]) + Math.round(wh / 2);"\
+							"addInputRow(ch, wh, uint32ToFloat(interval[2]));"\
+						"}"\
+					"});"\
+					"need_reload_interval = false;"\
+				"}"\
+				"const cpsElements = document.querySelectorAll('.cps-inp');"\
+            	"Intervals.forEach((interval, index) => {"\
+            		"if (index < cpsElements.length) {"\
+            			"updateCpsValue(index, interval[4], Math.sqrt(interval[3]) * 10);"\
+            		"}"\
+            	"});"\
+ 				"let hasErrors = false;"\
+				"data.length = 0;"\
+			 "}"\
 			 "function submitData() {"\
 				"const rows = inputContainer.querySelectorAll('.input-row');"\
 				"if (rows.length === 0) {"\
@@ -254,14 +317,16 @@
 					"const int1 = inputs[0].value;"\
 					"const int2 = inputs[1].value;"\
 					"const floatValue = inputs[2].value;"\
+					"const aqur = inputs[3].value;"\
 					"data.push({"\
 						"int1: parseInt(int1),"\
 						"int2: parseInt(int2),"\
-						"floatValue: parseFloat(floatValue)"\
+						"floatValue: parseFloat(floatValue),"\
+						"aqur: parseInt(aqur)"\
 					"});"\
 				"});"\
 			 "}"\
-			 "function addInputRow() {"\
+			 "function addInputRow(selChan = 0, selWidth = 0, selLev = 0) {"\
 				"if (rowCount >= maxRows) {"\
 					"alert(`Maximum intervals: ${maxRows}`);"\
 					"return;"\
@@ -270,14 +335,21 @@
 				"row.className = 'input-row';"\
 				"row.innerHTML = `"\
                 "<div class=\"row-number\">${rowCount + 1}</div>"\
-					"<input type=\"number\" placeholder=\"0\" class=\"int-input int_input1\" required>"\
-					"<input type=\"number\" placeholder=\"0\" class=\"int-input int_input2\" required>"\
-					"<input type=\"number\" placeholder=\"0\" step=\"any\" class=\"float-input\" required>"\
+					"<input type=\"number\" placeholder=\"0\" class=\"int-input int_input1\" min=5 max=1018 required>"\
+					"<input type=\"number\" placeholder=\"0\" class=\"int-input int_input2\" min=10 max=1023 required>"\
+					"<input type=\"number\" placeholder=\"0\" step=\"any\" class=\"float-input\" max=1000 min=0 required>"\
+					"<input type=\"number\" placeholder=\"0\" class=\"int-input int_input3\" value=900 max=90000 min=100 required>"\
+					"<span class=\"cps-inp\">0.000000</span>"\
 					"<button class=\"select-btn action-btn\">Sel</button>"\
 					"<button class=\"delete-btn\">Del</button>`;"\
 				"inputContainer.appendChild(row);"\
 				"rowCount++;"\
 				"rowCounter.textContent = rowCount;"\
+				"if (selChan != 0 && selWidth != 0) {"\
+					"row.querySelector('.int_input1').value = selChan;"\
+					"row.querySelector('.int_input2').value = selWidth;"\
+					"row.querySelector('.float-input').value = selLev;"\
+				"}"\
 				"row.querySelector('.action-btn').addEventListener('click', () => {"\
 					"var txt = row.querySelector('.action-btn').innerText;"\
 					"if (txt == \"Sel\") {"\
@@ -376,10 +448,10 @@
 		 		 "cntr.innerText = countr;"\
 		 		 "tmm.innerText = tmr;"\
 		 		 "CPS.innerText = (countr / tmr).toFixed(2);"\
-		 		 "aqur.innerText = Math.round(300 / Math.sqrt(countr));"\
+		 		 "aqur.innerText = (300 / Math.sqrt(countr)).toFixed(2);"\
 		 		 "cntSel.innerText = cntrsel;"\
 		 		 "cpsSel.innerText = (cntrsel / tmr).toFixed(4);"\
-		 		 "aqurSel.innerText = Math.round(300 / Math.sqrt(cntrsel));"\
+		 		 "aqurSel.innerText = (300 / Math.sqrt(cntrsel)).toFixed(2);"\
 		 	 "}"\
 		 	 "function drawSpecter(dataArray) {"\
 		 		 "if (!doNotRedraw) return;"\
@@ -436,7 +508,10 @@
 					"});"\
 				  "}).then(data => {"\
 						"drawSpecter(data.dataArray);"\
+						"totalTime = data.Time;"\
 						"reloadParameters(data.Counter, data.Time, data.countSel);"\
+						"reloadIntervals(data.Intervals);"\
+						"data=null;"\
 				  "}).catch(error => {"\
 						"console.error('Error:', error);"\
 			 "})};"\
@@ -447,6 +522,7 @@
 					"var a = 0;"\
 					"var b = 0;"\
 					"var c = 0;"\
+					"var d = 0;"\
 					"var startInt = 0;"\
 					"var endInt = 0;"\
 					"data.forEach((dat) => {"\
@@ -463,11 +539,16 @@
 						"if (isNaN(dat.floatValue)) {"\
 							"c = 0;"\
 						"} else {"\
-							"c = dat.floatValue;"\
+							"c = FloatTo32BitInt(dat.floatValue);"\
+						"}"\
+						"if (isNaN(dat.aqur)) {"\
+							"d = 900;"\
+						"} else {"\
+							"d = dat.aqur"\
 						"}"\
 						"startInt = Math.round(Number(a) - Number(b / 2));"\
 						"endInt = Math.round(Number(a) + Number(b / 2));"\
-						"selData += startInt + \"|\" + endInt + \"|\" + c + \"|\";"\
+						"selData += startInt + \"|\" + endInt + \"|\" + c + \"|\" + d + \"|\";"\
 					"});"\
 					"console.log(data);"\
 					"snd(\"/sel\" + selData);"\
@@ -475,9 +556,12 @@
 					"console.log(\"No data\");"\
 				"}"\
 			 "}"\
+			 "function setReloadData() {"\
+				 "need_reload_interval = true;"\
+			 "}"\
 			 "addRowBtn.addEventListener('click', addInputRow);"\
 			 "submitBtn.addEventListener('click', sendSelectData);"\
-			 "window.addEventListener('DOMContentLoaded', addInputRow);"\
+			 "readSelBtn.addEventListener('click', setReloadData);"\
   	  	  	 "setInterval(fetchData, 1000);"\
 			 "fetchData();"\
 			 "</script>"\
@@ -495,6 +579,8 @@
 #define SPECTER_DATA_7 "],"
 #define SPECTER_DATA_8 "}"
 #define SPECTER_DATA_9 "HTTP/1.1 200 OK\n\n"
+#define SPECTER_DATA_A ",\"Intervals\": ["
+#define SPECTER_DATA_B "]"
 
 #define LENGTH_WEB_PAGE (sizeof(WEB_PAGE) - 1)
 #define LENGTH_SPECTER_DATA_1 (sizeof(SPECTER_DATA_1) - 1)
@@ -506,5 +592,8 @@
 #define LENGTH_SPECTER_DATA_7 (sizeof(SPECTER_DATA_7) - 1)
 #define LENGTH_SPECTER_DATA_8 (sizeof(SPECTER_DATA_8) - 1)
 #define LENGTH_SPECTER_DATA_9 (sizeof(SPECTER_DATA_9) - 1)
+#define LENGTH_SPECTER_DATA_A (sizeof(SPECTER_DATA_A) - 1)
+#define LENGTH_SPECTER_DATA_B (sizeof(SPECTER_DATA_B) - 1)
+
 
 #endif

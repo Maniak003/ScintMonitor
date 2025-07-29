@@ -23,6 +23,8 @@ uint8_t dhcp_buffer[1024];
 __attribute__((aligned(4)))
 uint8_t receive_buff[RECEIVE_BUFF_SIZE];
 
+bool flag_send_intervals = true;
+
 char pathHTTP[512];
 
 volatile bool ip_assigned = false, wait_connect_flag = true;
@@ -203,7 +205,7 @@ int linsten_tcp_socket(void) {
 					//#ifdef ZABBIX_DEBUG
 					//UART_Printf("Specter data\r\n");
 					//#endif
-					uint8_t chan_buff[13]; // 2 ^ 32 = 4294967296, \x0
+					uint8_t chan_buff[40]; // 2 ^ 32 = 4294967296, \x0
 					send(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_1, LENGTH_SPECTER_DATA_1);
 					/* Передача текущего соточния счетчика*/
 					send(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_2, LENGTH_SPECTER_DATA_2);
@@ -220,29 +222,48 @@ int linsten_tcp_socket(void) {
 					//sprintf((char *)chan_buff, "%0.1f\x0", pulseCounter);
 					//send(HTTP_SOCKET, (uint8_t *)chan_buff, (uint16_t) strlen(chan_buff));
 
+					/* Предварительно очистим счетчики интервалов */
+					for (int j = 0; j < NUMBERINTERVAL; j++) {
+						intArrData[j].counts = 0;
+					}
 					/* Передача спектра */
 					send(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_6, LENGTH_SPECTER_DATA_6);
 					pulseCounterSel = 0;
 					for (int i = 0; i < SPECTER_SIZE; i++) {
 						for (int j = 0; j < NUMBERINTERVAL; j++) {
-							if ((i > intArrData[j].startPoint) && (i < intArrData[j].endPoint)) {
+							if ((intArrData[j].startPoint != 0) && (i > intArrData[j].startPoint) && (i < intArrData[j].endPoint)) {
 								pulseCounterSel += specterBuffer[i];
+								intArrData[j].counts += specterBuffer[i];
 								break;
 							}
 						}
 						if (i < SPECTER_SIZE - 1) {
-							sprintf((char *)chan_buff, "%lu,\x0", specterBuffer[i]);
+							sprintf((char *)chan_buff, "%lu,", specterBuffer[i]);
 						} else {
-							sprintf((char *)chan_buff, "%lu\x0", specterBuffer[i]);
+							sprintf((char *)chan_buff, "%lu", specterBuffer[i]);
 						}
 						//UART_Printf("%lu\x0", receive_buff);
-						send(HTTP_SOCKET, (uint8_t *)chan_buff, (uint16_t) strlen(chan_buff));
+						//send(HTTP_SOCKET, (uint8_t *)chan_buff, (uint16_t) strlen(chan_buff));
+						send_tcp_data(HTTP_SOCKET, (uint8_t *)chan_buff, (uint32_t) strlen((char *)chan_buff));
 					}
 					send(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_7, LENGTH_SPECTER_DATA_7);
 					/* Передача счетчика выделенной области */
 					send(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_4, LENGTH_SPECTER_DATA_4);
-					sprintf((char *)chan_buff, "%lu\x0", pulseCounterSel);
-					send(HTTP_SOCKET, (uint8_t *)chan_buff, (uint16_t) strlen(chan_buff));
+					sprintf((char *)chan_buff, "%lu", pulseCounterSel);
+					send(HTTP_SOCKET, (uint8_t *)chan_buff, (uint16_t) strlen((char *)chan_buff));
+					if (flag_send_intervals) {
+						//flag_send_intervals = false;
+						send_tcp_data(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_A, LENGTH_SPECTER_DATA_A);
+						for (int ij = 0; ij < NUMBERINTERVAL; ij++) {
+							if (ij < NUMBERINTERVAL - 1) {
+								sprintf((char *)chan_buff, "[%lu,%lu,%"PRIu32",%u,%lu],", (long unsigned int)intArrData[ij].startPoint, (long unsigned int)intArrData[ij].endPoint, intArrData[ij].lev.uData, intArrData[ij].aqur, intArrData[ij].counts);
+							} else {
+								sprintf((char *)chan_buff, "[%lu,%lu,%"PRIu32",%u,%lu]", (long unsigned int)intArrData[ij].startPoint, (long unsigned int)intArrData[ij].endPoint, intArrData[ij].lev.uData, intArrData[ij].aqur, intArrData[ij].counts);
+							}
+							send_tcp_data(HTTP_SOCKET, (uint8_t *)chan_buff, (uint32_t) strlen((char *)chan_buff));
+						}
+						send_tcp_data(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_B, LENGTH_SPECTER_DATA_B);
+					}
 					/* Завершение json данных */
 					send(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_8, LENGTH_SPECTER_DATA_8);
 
@@ -261,6 +282,7 @@ int linsten_tcp_socket(void) {
 						if (stpos == 0) {
 							NVIC_SystemReset();
 						} else {
+							/* Передача настроек интервалов */
 							stpos = strncmp((char *) pathHTTP, "/sel", 4);
 							if (stpos == 0) {
 								uint16_t len_interval = strlen(pathHTTP);
@@ -292,9 +314,13 @@ int linsten_tcp_socket(void) {
 											intArrData[m].endPoint = (uint16_t) tmpInt;
 											break;
 										case 2:
+											intArrData[m].lev.uData = (uint32_t) tmpInt;
+											break;
+										case 3:
+											intArrData[m].aqur = (uint16_t) tmpInt;
 											k = 0;
-											//intArrData[m].lev.uData = (uint16_t) tmpInt;
-											//break;
+											m++;
+											break;
 										}
 										#ifdef ZABBIX_DEBUG
 										UART_Printf("DT: %lu\r\n", tmpInt);
