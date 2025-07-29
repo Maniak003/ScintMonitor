@@ -203,10 +203,10 @@
 					"<p class=\"counter\"> Count : <span id=\"counter_id\">0</span></p>"\
 					"<p class=\"counter\">Time : <span id=\"time_id\">0</span></p>"\
 					"<p class=\"counter\">CPS : <span id=\"cps_id\">0</p>"\
-					"<p class=\"counter\">Aquracy : <span id=\"aquracy_id\">10</span>%</p>"\
+					"<p class=\"counter\">Accuracy : <span id=\"aquracy_id\">10</span>%</p>"\
 					"<p class=\"counter\">CountSel : <span id=\"cnt_sel_id\">10</span></p>"\
 					"<p class=\"counter\">CPSSel : <span id=\"cps_sel_id\">10</span></p>"\
-					"<p class=\"counter\">AquracySel : <span id=\"aquracy_sel_id\">10</span>%</p>"\
+					"<p class=\"counter\">AccuracySel : <span id=\"aquracy_sel_id\">10</span>%</p>"\
 				"</div>"\
 				"<button class=\"add-btn\" type=\"button\" onclick=snd(\"/clr\")>Clear</button>"\
 				"<button class=\"add-btn\" type=\"button\" onclick=saveSpr()>Save</button>"\

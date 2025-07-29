@@ -193,7 +193,7 @@ int linsten_tcp_socket(void) {
 			}
 
 			int stpos = strcmp((char *) pathHTTP, "/");
-			int len_s = 0;
+			//int len_s = 0;
 			//UART_Printf("Pos: %d\r\n", stpos);
 			/* Главная web страница */
 			if ( stpos == 0) {
@@ -209,13 +209,13 @@ int linsten_tcp_socket(void) {
 					send(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_1, LENGTH_SPECTER_DATA_1);
 					/* Передача текущего соточния счетчика*/
 					send(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_2, LENGTH_SPECTER_DATA_2);
-					sprintf((char *)chan_buff, "%lu,\x0", pulseCounter);
-					send(HTTP_SOCKET, (uint8_t *)chan_buff, (uint16_t) strlen(chan_buff));
+					sprintf((char *)chan_buff, "%lu,", pulseCounter);
+					send(HTTP_SOCKET, (uint8_t *)chan_buff, (uint16_t) strlen((char*)chan_buff));
 
 					/* Передача времени набора */
 					send(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_3, LENGTH_SPECTER_DATA_3);
-					sprintf((char *)chan_buff, "%lu,\x0", tm);
-					send(HTTP_SOCKET, (uint8_t *)chan_buff, (uint16_t) strlen(chan_buff));
+					sprintf((char *)chan_buff, "%lu,", tm);
+					send(HTTP_SOCKET, (uint8_t *)chan_buff, (uint16_t) strlen((char*)chan_buff));
 					//HAL_Delay(100);
 					/* Передача точности измерения по 3 сигма */
 					//send(HTTP_SOCKET, (uint8_t *)SPECTER_DATA_5, LENGTH_SPECTER_DATA_5);
@@ -456,9 +456,9 @@ uint8_t sendToZabbix(uint8_t * addr, char * host, char * key, float value) {
     uint8_t tcp_socket = TCP_SOCKET;
     uint8_t code = socket(tcp_socket, Sn_MR_TCP, 10888, 0);
     if(code != tcp_socket) {
-	#ifdef ZABBIX_DEBUG
+		#ifdef ZABBIX_DEBUG
         UART_Printf("socket() failed, code = %d\r\n", code);
-	#endif
+		#endif
         return(-1);
     }
 	#ifdef ZABBIX_DEBUG
@@ -466,15 +466,15 @@ uint8_t sendToZabbix(uint8_t * addr, char * host, char * key, float value) {
 	#endif
     code = connect(tcp_socket, addr, ZABBIXPORT);
     if(code != SOCK_OK) {
-	#ifdef ZABBIX_DEBUG
+		#ifdef ZABBIX_DEBUG
         UART_Printf("connect() failed, code = %d\r\n", code);
-	#endif
+		#endif
         close(tcp_socket);
         return(-2);
     }
-#ifdef ZABBIX_DEBUG
+	#ifdef ZABBIX_DEBUG
     UART_Printf("Connected, sending ZABBIX request...\r\n");
-#endif
+	#endif
     {
     	char req[ZABBIXMAXLEN];
     	char str[ZABBIXMAXLEN - 13];
@@ -497,14 +497,14 @@ uint8_t sendToZabbix(uint8_t * addr, char * host, char * key, float value) {
         uint8_t len = req[5] + 13;
         uint8_t* buff = (uint8_t*)&req;
         while(len > 0) {
-		#ifdef ZABBIX_DEBUG
+			#ifdef ZABBIX_DEBUG
             UART_Printf("Sending %d bytes, data length %d bytes...\r\n", len, req[5]);
-		#endif
+			#endif
             int32_t nbytes = send(tcp_socket, buff, len);
             if(nbytes <= 0) {
-			#ifdef ZABBIX_DEBUG
+				#ifdef ZABBIX_DEBUG
                 UART_Printf("send() failed, %d returned\r\n", nbytes);
-			#endif
+				#endif
                 close(tcp_socket);
                 return(-3);
             }
@@ -515,7 +515,7 @@ uint8_t sendToZabbix(uint8_t * addr, char * host, char * key, float value) {
         }
     }
     /* Read data from Zabbix */
-	#ifdef ZABBIX_DEBUG
+		#ifdef ZABBIX_DEBUG
 		UART_Printf("Read.\r\n");
 		{
 			char buff[32];
@@ -525,17 +525,14 @@ uint8_t sendToZabbix(uint8_t * addr, char * host, char * key, float value) {
 					UART_Printf("\r\nDisconnect.\r\n");
 					break;
 				}
-
 				if(nbytes <= 0) {
 					UART_Printf("\r\nrecv() failed, %d\r\n", nbytes);
 					break;
 				}
-
 				buff[nbytes] = '\0';
 				UART_Printf("%s", buff);
 			}
 		}
-
 		UART_Printf("Closing socket.\r\n");
 	#endif
     close(tcp_socket);
