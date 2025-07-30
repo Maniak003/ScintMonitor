@@ -2750,7 +2750,7 @@
 				)
 			)
 		)
-		(property "Value" "4.3k"
+		(property "Value" "13k"
 			(at 0 1.43 0)
 			(layer "F.Fab")
 			(uuid "10a15ac9-a38c-4a04-a8b0-090bdef4e6bb")
@@ -3413,7 +3413,7 @@
 				)
 			)
 		)
-		(property "Value" "120k"
+		(property "Value" "330k"
 			(at 0 1.43 0)
 			(layer "F.Fab")
 			(uuid "e16c6af5-688a-4a1a-81a7-62e58558fff7")
@@ -8575,7 +8575,7 @@
 				)
 			)
 		)
-		(property "Value" "20k"
+		(property "Value" "1k"
 			(at 0 1.43 90)
 			(layer "F.Fab")
 			(uuid "160c32b1-15bd-4ea9-a707-f12d1a54b080")
