@@ -49,9 +49,9 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 #define SPECTER_SIZE 1024
-#define COMPARATOR_LEVEL 120
-#define HV_LEVEL 100
-#define AMP_DEFAULT 255
+#define COMPARATOR_LEVEL 40
+#define HV_LEVEL 1800
+#define AMP_DEFAULT 0
 #define DELAYTIME1 1000
 #define NUMBERINTERVAL 10
 #define STRINGIFY(x) #x
