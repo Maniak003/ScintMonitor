@@ -20556,7 +20556,7 @@
 				)
 			)
 		)
-		(property "Value" "3k"
+		(property "Value" "3k*"
 			(at 151.13 38.1 0)
 			(effects
 				(font

@@ -380,7 +380,7 @@ int main(void)
 					  /* Уменьшение усиления */
 					  if (strchr((char *) ctrlChar, 'd')) {
 						  if (ampLevel <= 0xFF) {
-							  ampLevel++;
+							  ampLevel--;
 							  AD5245level(ampLevel);
 						  } else {
 							  ampLevel = 0xFF;

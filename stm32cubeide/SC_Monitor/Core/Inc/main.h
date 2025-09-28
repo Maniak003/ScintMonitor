@@ -51,7 +51,7 @@ extern "C" {
 #define SPECTER_SIZE 1024
 #define COMPARATOR_LEVEL 40
 #define HV_LEVEL 1800
-#define AMP_DEFAULT 0
+#define AMP_DEFAULT 120
 #define DELAYTIME1 1000
 #define NUMBERINTERVAL 10
 #define STRINGIFY(x) #x
